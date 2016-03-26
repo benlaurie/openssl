@@ -1,0 +1,5 @@
+PROGRAMS=handshake-fuzz
+
+SOURCE[handshake-fuzz]=handshake-fuzz.c
+INCLUDE[handshake-fuzz]=../include
+DEPEND[handshake-fuzz]=../libcrypto ../libssl ../../../svn-work/Fuzzer/libFuzzer

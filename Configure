@@ -267,6 +267,7 @@ my @disablables = (
     "engine",
     "err",
     "filenames",
+    "fuzz",
     "gost",
     "heartbeats",
     "hmac",
@@ -332,6 +333,7 @@ my @deprecated_disablables = (
 our %disabled = ( # "what"         => "comment"
 		  "ec_nistp_64_gcc_128" => "default",
 		  "egd"                 => "default",
+		  "fuzz"		=> "default",
 		  "md2"                 => "default",
 		  "rc5"                 => "default",
 		  "sctp"                => "default",
@@ -1013,6 +1015,11 @@ if ($disabled{"dynamic-engine"}) {
 } else {
         push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
         $config{dynamic_engines} = 1;
+}
+
+unless ($disabled{fuzz}) {
+    push $config{dirs}, "fuzz";
+    $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls -fsanitize=address -g";
 }
 
 #
