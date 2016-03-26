@@ -106,23 +106,19 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
     if (ctlog_store == NULL) {
         setup_ok = 0;
         fprintf(stderr, "Failed to create a new CT log store\n");
-        goto end;
+        exit(EXIT_FAILURE);
     }
 
     if (CTLOG_STORE_load_default_file(ctlog_store) != 1) {
         setup_ok = 0;
         fprintf(stderr, "Failed to load CT log list\n");
-        goto end;
+        exit(EXIT_FAILURE);
     }
 
     memset(&fixture, 0, sizeof(fixture));
     fixture.test_case_name = test_case_name;
     fixture.ctlog_store = ctlog_store;
 
-end:
-    if (!setup_ok) {
-        exit(EXIT_FAILURE);
-    }
     return fixture;
 }
 
