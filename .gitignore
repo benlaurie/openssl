@@ -56,7 +56,14 @@ Makefile
 
 # Executables
 /apps/openssl
+/fuzz/asn1
+/fuzz/asn1-reproduce
+/fuzz/asn1parse
+/fuzz/asn1parse-reproduce
 /fuzz/server
+/fuzz/server-reproduce
+/fuzz/x509
+/fuzz/x509-reproduce
 /test/sha256t
 /test/sha512t
 /test/gost2814789t

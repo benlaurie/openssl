@@ -1,5 +1,33 @@
-PROGRAMS=server
+PROGRAMS=server server-reproduce asn1 asn1-reproduce asn1parse asn1parse-reproduce x509 x509-reproduce
 
 SOURCE[server]=server.c
 INCLUDE[server]=../include
 DEPEND[server]=../libcrypto ../libssl ../../../svn-work/Fuzzer/libFuzzer
+
+SOURCE[server-reproduce]=server.c reproduce.c
+INCLUDE[server-reproduce]=../include
+DEPEND[server-reproduce]=../libcrypto ../libssl
+
+SOURCE[asn1]=asn1.c
+INCLUDE[asn1]=../include
+DEPEND[asn1]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+
+SOURCE[asn1-reproduce]=asn1.c reproduce.c
+INCLUDE[asn1-reproduce]=../include
+DEPEND[asn1-reproduce]=../libcrypto
+
+SOURCE[asn1parse]=asn1parse.c
+INCLUDE[asn1parse]=../include
+DEPEND[asn1parse]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+
+SOURCE[asn1parse-reproduce]=asn1parse.c reproduce.c
+INCLUDE[asn1parse-reproduce]=../include
+DEPEND[asn1parse-reproduce]=../libcrypto
+
+SOURCE[x509]=x509.c
+INCLUDE[x509]=../include
+DEPEND[x509]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+
+SOURCE[x509-reproduce]=x509.c reproduce.c
+INCLUDE[x509-reproduce]=../include
+DEPEND[x509-reproduce]=../libcrypto
