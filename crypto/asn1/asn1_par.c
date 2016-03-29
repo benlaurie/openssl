@@ -190,13 +190,16 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                 }
             } else
                 while (p < ep) {
-                    r = asn1_parse2(bp, &p, (long)len,
+                    const unsigned char *sp = p;
+
+                    r = asn1_parse2(bp, &p, len,
                                     offset + (p - *pp), depth + 1,
                                     indent, dump);
                     if (r == 0) {
                         ret = 0;
                         goto end;
                     }
+                    len = p - sp;
                 }
         } else if (xclass != 0) {
             p += len;
