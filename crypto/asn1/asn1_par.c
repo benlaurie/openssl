@@ -174,6 +174,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
             }
             if ((j == 0x21) && (len == 0)) {
                 for (;;) {
+                    const unsigned char *sp = p;
+
                     r = asn1_parse2(bp, &p, (long)(tot - p),
                                     offset + (p - *pp), depth + 1,
                                     indent, dump);
@@ -181,8 +183,10 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         ret = 0;
                         goto end;
                     }
-                    if ((r == 2) || (p >= tot))
+                    if ((r == 2) || (p >= tot)) {
+                        len = p - sp;
                         break;
+                    }
                 }
             } else
                 while (p < ep) {
