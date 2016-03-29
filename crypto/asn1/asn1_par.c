@@ -229,7 +229,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         goto end;
                     dump_cont = 1;
                 }
-                BIO_printf(bp, ":%u", p[0]);
+                if (len > 0)
+                    BIO_printf(bp, ":%u", p[0]);
             } else if (tag == V_ASN1_BMPSTRING) {
                 /* do the BMP thang */
             } else if (tag == V_ASN1_OCTET_STRING) {
