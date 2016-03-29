@@ -164,6 +164,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
         if (!asn1_print_info(bp, tag, xclass, j, (indent) ? depth : 0))
             goto end;
         if (j & V_ASN1_CONSTRUCTED) {
+            const unsigned char *sp = p;
+                
             ep = p + len;
             if (BIO_write(bp, "\n", 1) <= 0)
                 goto end;
@@ -174,8 +176,6 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
             }
             if ((j == 0x21) && (len == 0)) {
                 for (;;) {
-                    const unsigned char *sp = p;
-
                     r = asn1_parse2(bp, &p, (long)(tot - p),
                                     offset + (p - *pp), depth + 1,
                                     indent, dump);
@@ -188,10 +188,9 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         break;
                     }
                 }
-            } else
+            } else {
                 while (p < ep) {
-                    const unsigned char *sp = p;
-
+                    sp = p;
                     r = asn1_parse2(bp, &p, len,
                                     offset + (p - *pp), depth + 1,
                                     indent, dump);
@@ -199,8 +198,10 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         ret = 0;
                         goto end;
                     }
-                    len = p - sp;
+                    len -= p - sp;
                 }
+                len = length;
+            }
         } else if (xclass != 0) {
             p += len;
             if (BIO_write(bp, "\n", 1) <= 0)
