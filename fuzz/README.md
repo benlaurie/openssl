@@ -54,7 +54,7 @@ than all this palaver), you might want to also use ccache:
     $ LDCMD="ccache clang++" make -j
 
 Look at [the
-diff](https://github.com/openssl/openssl/compare/master...benlaurie:fuzz) for
+diff](https://github.com/benlaurie/openssl/compare/master...benlaurie:fuzz) for
 more info.
 
 ## Old Way
@@ -119,7 +119,3 @@ than all this palaver), you might want to also use ccache:
     $ sudo apt-get install ccache
     $ CC="ccache clang-3.7" ./config enable-fuzz
     $ LDCMD="ccache clang++-3.7" make -j
-
-Look at [the
-diff](https://github.com/openssl/openssl/compare/master...benlaurie:fuzz) for
-more info.
