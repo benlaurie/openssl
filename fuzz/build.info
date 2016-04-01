@@ -1,49 +1,51 @@
 PROGRAMS=server server-reproduce asn1 asn1-reproduce asn1parse asn1parse-reproduce x509 x509-reproduce cms cms-reproduce conf conf-reproduce
 
+INCLUDE[reproduce.o]=../include ../../../svn-work/Fuzzer
+
 SOURCE[server]=server.c
-INCLUDE[server]=../include
+INCLUDE[server]=../include ../../../svn-work/Fuzzer
 DEPEND[server]=../libcrypto ../libssl ../../../svn-work/Fuzzer/libFuzzer
 
 SOURCE[server-reproduce]=server.c reproduce.c
-INCLUDE[server-reproduce]=../include
+INCLUDE[server-reproduce]=../include ../../../svn-work/Fuzzer/libFuzzer
 DEPEND[server-reproduce]=../libcrypto ../libssl
 
 SOURCE[asn1]=asn1.c
-INCLUDE[asn1]=../include
+INCLUDE[asn1]=../include ../../../svn-work/Fuzzer
 DEPEND[asn1]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 
 SOURCE[asn1-reproduce]=asn1.c reproduce.c
-INCLUDE[asn1-reproduce]=../include
+INCLUDE[asn1-reproduce]=../include ../../../svn-work/Fuzzer/libFuzzer
 DEPEND[asn1-reproduce]=../libcrypto
 
 SOURCE[asn1parse]=asn1parse.c
-INCLUDE[asn1parse]=../include
+INCLUDE[asn1parse]=../include ../../../svn-work/Fuzzer
 DEPEND[asn1parse]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 
 SOURCE[asn1parse-reproduce]=asn1parse.c reproduce.c
-INCLUDE[asn1parse-reproduce]=../include
+INCLUDE[asn1parse-reproduce]=../include ../../../svn-work/Fuzzer
 DEPEND[asn1parse-reproduce]=../libcrypto
 
 SOURCE[x509]=x509.c
-INCLUDE[x509]=../include
+INCLUDE[x509]=../include ../../../svn-work/Fuzzer
 DEPEND[x509]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 
 SOURCE[x509-reproduce]=x509.c reproduce.c
-INCLUDE[x509-reproduce]=../include
+INCLUDE[x509-reproduce]=../include ../../../svn-work/Fuzzer
 DEPEND[x509-reproduce]=../libcrypto
 
 SOURCE[cms]=cms.c
-INCLUDE[cms]=../include
+INCLUDE[cms]=../include ../../../svn-work/Fuzzer
 DEPEND[cms]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 
 SOURCE[cms-reproduce]=cms.c reproduce.c
-INCLUDE[cms-reproduce]=../include
+INCLUDE[cms-reproduce]=../include ../../../svn-work/Fuzzer
 DEPEND[cms-reproduce]=../libcrypto
 
 SOURCE[conf]=conf.c
-INCLUDE[conf]=../include
+INCLUDE[conf]=../include ../../../svn-work/Fuzzer
 DEPEND[conf]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 
 SOURCE[conf-reproduce]=conf.c reproduce.c
-INCLUDE[conf-reproduce]=../include
+INCLUDE[conf-reproduce]=../include ../../../svn-work/Fuzzer
 DEPEND[conf-reproduce]=../libcrypto

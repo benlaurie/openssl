@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
+#include <FuzzerInterface.h>
 
 static const uint8_t kCertificateDER[] = {
     0x30, 0x82, 0x02, 0xff, 0x30, 0x82, 0x01, 0xe7, 0xa0, 0x03, 0x02, 0x01,
@@ -184,16 +185,18 @@ static void Init() {
     assert(privkey != NULL);
     EVP_PKEY *pkey = EVP_PKEY_new();
     EVP_PKEY_assign_RSA(pkey, privkey);
-    SSL_CTX_use_PrivateKey(ctx, pkey);
+    int ret = SSL_CTX_use_PrivateKey(ctx, pkey);
+    assert(ret == 1);
     EVP_PKEY_free(pkey);
     bufp = kCertificateDER;
     X509 *cert = d2i_X509(NULL, &bufp, sizeof(kCertificateDER));
     assert(cert != NULL);
-    SSL_CTX_use_certificate(ctx, cert);
+    ret = SSL_CTX_use_certificate(ctx, cert);
+    assert(ret == 1);
     X509_free(cert);
   }
 
-int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
+int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
     if (ctx == NULL)
         Init();
     //RAND_reset_for_fuzzing();

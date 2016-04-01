@@ -1,7 +1,8 @@
 #include <openssl/bio.h>
 #include <openssl/cms.h>
+#include <FuzzerInterface.h>
 
-int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
+int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
     BIO *in = BIO_new(BIO_s_mem());
     BIO_write(in, buf, len);
     CMS_ContentInfo *i = d2i_CMS_bio(in, NULL);
@@ -9,4 +10,3 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
     BIO_free(in);
     return 0;
 }
-
