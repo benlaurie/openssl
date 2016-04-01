@@ -111,7 +111,7 @@ Configure for fuzzing:
     $ CC=clang-3.7 ./config enable-fuzz
     $ sudo apt-get install make
     $ LDCMD=clang++-3.7 make -j
-    $ fuzz/server
+    $ fuzz/helper.py server (or whichever fuzzer you want to run)
 
 If you are working on developing new fuzzing targets (which is much easier
 than all this palaver), you might want to also use ccache:
