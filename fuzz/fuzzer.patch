@@ -1,0 +1,36 @@
+$ svn diff
+Index: FuzzerInterface.h
+===================================================================
+--- FuzzerInterface.h   (revision 264563)
++++ FuzzerInterface.h   (working copy)
+@@ -16,11 +16,15 @@
+ #ifndef LLVM_FUZZER_INTERFACE_H
+ #define LLVM_FUZZER_INTERFACE_H
+
++#ifdef __cplusplus
+ #include <cstddef>
+ #include <cstdint>
+
+ // Plain C interface. Should be sufficient for most uses.
+ extern "C" {
++#else
++typedef unsigned char uint8_t;
++#endif
+ // The target function, mandatory.
+ // Must return 0.
+ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
+@@ -33,6 +37,7 @@
+ size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size, size_t MaxSize,
+                                unsigned int Seed);
+
++#ifdef __cplusplus
+ }  // extern "C"
+
+ namespace fuzzer {
+@@ -76,5 +81,6 @@
+ size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
+
+ }  // namespace fuzzer
++#endif
+
+ #endif  // LLVM_FUZZER_INTERFACE_H

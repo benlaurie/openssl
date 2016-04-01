@@ -17,7 +17,15 @@ You may want to git pull and re-run the update from time to time.
 
 Update your path:
 
-    $ PATH=$PATH:~/third_party/llvm-build/Release+Asserts/bin/
+    $ PATH=~/third_party/llvm-build/Release+Asserts/bin/:$PATH
+
+Install a modified version of OpenSSL.
+
+    $ cd
+    $ cd git-work
+    $ git clone https://github.com/benlaurie/openssl.git
+    $ cd openssl
+    $ git checkout fuzz
 
 Get and build libFuzzer:
 
@@ -27,17 +35,10 @@ Get and build libFuzzer:
     $ cd svn-work
     $ svn co http://llvm.org/svn/llvm-project/llvm/trunk/lib/Fuzzer
     $ cd Fuzzer
+    $ patch < ../../git-work/openssl/fuzz/fuzzer.patch (hopefully temporary)
     $ clang++ -c -g -O2 -std=c++11 *.cpp
     $ ar r libFuzzer.a *.o
     $ ranlib libFuzzer.a
-
-Install a modified version of OpenSSL.
-
-    $ cd
-    $ cd git-work
-    $ git clone https://github.com/benlaurie/openssl.git
-    $ cd openssl
-    $ git checkout fuzz
 
 Configure for fuzzing:
 
