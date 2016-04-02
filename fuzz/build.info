@@ -1,4 +1,4 @@
-PROGRAMS=server server-reproduce asn1 asn1-reproduce asn1parse asn1parse-reproduce x509 x509-reproduce cms cms-reproduce conf conf-reproduce
+PROGRAMS=server server-reproduce asn1 asn1-reproduce asn1parse asn1parse-reproduce cms cms-reproduce conf conf-reproduce
 
 INCLUDE[reproduce.o]=../include ../../../svn-work/Fuzzer
 
@@ -25,14 +25,6 @@ DEPEND[asn1parse]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 SOURCE[asn1parse-reproduce]=asn1parse.c reproduce.c
 INCLUDE[asn1parse-reproduce]=../include ../../../svn-work/Fuzzer
 DEPEND[asn1parse-reproduce]=../libcrypto
-
-SOURCE[x509]=x509.c
-INCLUDE[x509]=../include ../../../svn-work/Fuzzer
-DEPEND[x509]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
-
-SOURCE[x509-reproduce]=x509.c reproduce.c
-INCLUDE[x509-reproduce]=../include ../../../svn-work/Fuzzer
-DEPEND[x509-reproduce]=../libcrypto
 
 SOURCE[cms]=cms.c
 INCLUDE[cms]=../include ../../../svn-work/Fuzzer
