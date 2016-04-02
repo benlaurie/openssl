@@ -4,7 +4,12 @@
 #include <sys/stat.h>
 #include <FuzzerInterface.h>
 
+__attribute__((weak)) int LLVMFuzzerInitialize(int *argc, char ***argv);
+
 int main(int argc, char **argv) {
+    if (LLVMFuzzerInitialize)
+        LLVMFuzzerInitialize(&argc, &argv);
+
     struct stat st;
     stat(argv[1], &st);
     FILE *f = fopen(argv[1], "r");
