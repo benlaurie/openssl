@@ -18,14 +18,14 @@ int LLVMFuzzerInitialize(int *argc, char ***argv) {
     (*argv)[1] = (*argv)[0];
     ++*argv;
     --*argc;
-    if (!strcmp(cmd, "GENERAL_NAME"))
-        item_type = ASN1_ITEM_rptr(GENERAL_NAME);
-    else if(!strcmp(cmd, "X509"))
-        item_type = ASN1_ITEM_rptr(X509);
-    else if(!strcmp(cmd, "ASN1_SEQUENCE"))
+    if(!strcmp(cmd, "ASN1_SEQUENCE"))
         item_type = ASN1_ITEM_rptr(ASN1_SEQUENCE);
     else if(!strcmp(cmd, "BIGNUM"))
         item_type = ASN1_ITEM_rptr(BIGNUM);
+    else if (!strcmp(cmd, "GENERAL_NAME"))
+        item_type = ASN1_ITEM_rptr(GENERAL_NAME);
+    else if(!strcmp(cmd, "X509"))
+        item_type = ASN1_ITEM_rptr(X509);
     else
         assert(!"Bad type");
 
