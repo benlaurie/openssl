@@ -8,12 +8,6 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_d2i");
 
-<<<<<<< HEAD
-plan tests => 1;
-
-ok(run(test(["d2i_test", srctop_file('test','d2i-tests','bad_cert.der')])),
-   "Running d2i_test bad_cert.der");
-=======
 plan tests => 2;
 
 ok(run(test(["d2i_test", "x509",
@@ -23,4 +17,3 @@ ok(run(test(["d2i_test", "x509",
 ok(run(test(["d2i_test", "generalname",
              srctop_file('test','d2i-tests','bad_generalname.der')])),
    "Running d2i_test bad_generalname.der");
->>>>>>> FETCH_HEAD

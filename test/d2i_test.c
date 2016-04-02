@@ -11,15 +11,10 @@
 /* Regression tests for ASN.1 parsing bugs. */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "testutil.h"
 
-<<<<<<< HEAD
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-
-=======
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -27,7 +22,6 @@
 #include <openssl/x509v3.h>
 
 static const ASN1_ITEM *item_type;
->>>>>>> FETCH_HEAD
 static const char *test_file;
 
 typedef struct d2i_test_fixture {
@@ -45,24 +39,15 @@ static D2I_TEST_FIXTURE set_up(const char *const test_case_name)
 static int execute_test(D2I_TEST_FIXTURE fixture)
 {
     BIO *bio = NULL;
-<<<<<<< HEAD
-    X509 *x509 = NULL;
-    int ret = 1;
-=======
     ASN1_VALUE *value = NULL;
     int ret = 1;
     unsigned char buf[2048];
     const unsigned char *buf_ptr = buf;
-    size_t len;
->>>>>>> FETCH_HEAD
+    int len;
 
     if ((bio = BIO_new_file(test_file, "r")) == NULL)
         return 1;
 
-<<<<<<< HEAD
-    x509 = d2i_X509_bio(bio, NULL);
-    if (x509 != NULL)
-=======
     /*
      * We don't use ASN1_item_d2i_bio because it, apparently,
      * errors too early for some inputs.
@@ -73,18 +58,13 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
 
     value = ASN1_item_d2i(NULL, &buf_ptr, len, item_type);
     if (value != NULL)
->>>>>>> FETCH_HEAD
         goto err;
 
     ret = 0;
 
  err:
     BIO_free(bio);
-<<<<<<< HEAD
-    X509_free(x509);
-=======
     ASN1_item_free(value, item_type);
->>>>>>> FETCH_HEAD
     return ret;
 }
 
@@ -99,28 +79,12 @@ static void tear_down(D2I_TEST_FIXTURE fixture)
 #define EXECUTE_D2I_TEST() \
     EXECUTE_TEST(execute_test, tear_down)
 
-<<<<<<< HEAD
-static int test_bad_certificate()
-=======
 static int test_bad_asn1()
->>>>>>> FETCH_HEAD
 {
     SETUP_D2I_TEST_FIXTURE();
     EXECUTE_D2I_TEST();
 }
 
-<<<<<<< HEAD
-int main(int argc, char **argv)
-{
-    int result = 0;
-
-    if (argc != 2)
-        return 1;
-
-    test_file = argv[1];
-
-    ADD_TEST(test_bad_certificate);
-=======
 /*
  * Usage: d2i_test <type> <file>, e.g.
  * d2i_test generalname bad_generalname.der
@@ -141,12 +105,11 @@ int main(int argc, char **argv)
     } else if (strcmp(test_type_name, "x509") == 0) {
         item_type = ASN1_ITEM_rptr(X509);
     } else {
-        fprintf(stderr, "Bad type %s\n");
+        fprintf(stderr, "Bad type %s\n", test_type_name);
         return 1;
     }
 
     ADD_TEST(test_bad_asn1);
->>>>>>> FETCH_HEAD
 
     result = run_tests(argv[0]);
 
