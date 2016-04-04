@@ -62,6 +62,8 @@ Makefile
 /fuzz/asn1parse-reproduce
 /fuzz/bignum
 /fuzz/bignum-reproduce
+/fuzz/bndiv
+/fuzz/bndiv-reproduce
 /fuzz/conf
 /fuzz/conf-reproduce
 /fuzz/cms
