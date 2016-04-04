@@ -60,6 +60,8 @@ Makefile
 /fuzz/asn1-reproduce
 /fuzz/asn1parse
 /fuzz/asn1parse-reproduce
+/fuzz/bignum
+/fuzz/bignum-reproduce
 /fuzz/conf
 /fuzz/conf-reproduce
 /fuzz/cms
