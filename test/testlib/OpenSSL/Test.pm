@@ -244,7 +244,23 @@ string PATH, I<or>, if the value is C<undef>, C</dev/null> or similar.
 =item B<perltest ARRAYREF, OPTS>
 
 Both these functions function the same way as B<app> and B<test>, except
-that they expect the command to be a perl script.
+that they expect the command to be a perl script.  Also, they support one
+more option:
+
+=over 4
+
+=item B<interpreter_args =E<gt> ARRAYref>
+
+The array reference is a set of arguments for perl rather than the script.
+Take care so that none of them can be seen as a script!  Flags and their
+eventual arguments only!
+
+=back
+
+An example:
+
+  ok(run(perlapp(["foo.pl", "arg1"],
+                 interpreter_args => [ "-I", srctop_dir("test") ])));
 
 =back
 
@@ -337,6 +353,9 @@ sub run {
 	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
 	$r = $hooks{exit_checker}->($e);
     }
+
+    print STDERR "$prefix$display_cmd => $e\n"
+        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -529,10 +548,28 @@ sub with {
 
 =over 4
 
-=item B<cmdstr CODEREF>
+=item B<cmdstr CODEREF, OPTS>
 
 C<cmdstr> takes a CODEREF from C<app> or C<test> and simply returns the
 command as a string.
+
+C<cmdstr> takes some additiona options OPTS that affect the string returned:
+
+=over 4
+
+=item B<display =E<gt> 0|1>
+
+When set to 0, the returned string will be with all decorations, such as a
+possible redirect of stderr to the null device.  This is suitable if the
+string is to be used directly in a recipe.
+
+When set to 1, the returned string will be without extra decorations.  This
+is suitable for display if that is desired (doesn't confuse people with all
+internal stuff), or if it's used to pass a command down to a subprocess.
+
+Default: 0
+
+=back
 
 =back
 
@@ -540,8 +577,13 @@ command as a string.
 
 sub cmdstr {
     my ($cmd, $display_cmd) = shift->(0);
+    my %opts = @_;
 
-    return $display_cmd;
+    if ($opts{display}) {
+        return $display_cmd;
+    } else {
+        return $cmd;
+    }
 }
 
 =over 4
@@ -626,9 +668,11 @@ failures will result in a C<BAIL_OUT> at the end of its run.
 sub __env {
     $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
     $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
-    $directories{APPS}    = $ENV{BIN_D}  || __bldtop_dir("apps");
-    $directories{TEST}    = $ENV{TEST_D} || __bldtop_dir("test");
-    $directories{RESULTS} = $ENV{RESULT_D} || $directories{TEST};
+    $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
+    $directories{SRCAPPS} =                 __srctop_dir("apps");
+    $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
+    $directories{SRCTEST} =                 __srctop_dir("test");
+    $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
 
     $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 };
@@ -659,32 +703,50 @@ sub __bldtop_dir {
     return catdir($directories{BLDTOP},@_);
 }
 
+sub __exeext {
+    my $ext = "";
+    if ($^O eq "VMS" ) {	# VMS
+	$ext = ".exe";
+    } elsif ($^O eq "MSWin32") { # Windows
+	$ext = ".exe";
+    }
+    return $ENV{"EXE_EXT"} || $ext;
+}
+
 sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    my $f = pop;
-    return catfile($directories{TEST},@_,$f);
+    my $f = pop . __exeext();
+    $f = catfile($directories{BLDTEST},@_,$f);
+    $f = catfile($directories{SRCTEST},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perltest_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{TEST},@_,$f));
+    $f = catfile($directories{BLDTEST},@_,$f);
+    $f = catfile($directories{SRCTEST},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __apps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    my $f = pop;
-    return catfile($directories{APPS},@_,$f);
+    my $f = pop . __exeext();
+    $f = catfile($directories{BLDAPPS},@_,$f);
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perlapps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{APPS},@_,$f));
+    $f = catfile($directories{BLDAPPS},@_,$f);
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __results_file {
@@ -741,9 +803,11 @@ sub __cwd {
 
     if ($debug) {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
-	print STDERR "  \$directories{TEST}    = \"$directories{TEST}\"\n";
+	print STDERR "  \$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
+	print STDERR "  \$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
 	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
-	print STDERR "  \$directories{APPS}    = \"$directories{APPS}\"\n";
+	print STDERR "  \$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
+	print STDERR "  \$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
 	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
 	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
 	print STDERR "\n";
@@ -759,23 +823,20 @@ sub __fixup_cmd {
     my $exe_shell = shift;
 
     my $prefix = __bldtop_file("util", "shlib_wrap.sh")." ";
-    my $ext = $ENV{"EXE_EXT"} || "";
 
     if (defined($exe_shell)) {
 	$prefix = "$exe_shell ";
     } elsif ($^O eq "VMS" ) {	# VMS
 	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
-	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
-	$ext = ".exe";
     }
 
     # We test both with and without extension.  The reason
     # is that we might be passed a complete file spec, with
     # extension.
     if ( ! -x $prog ) {
-	my $prog = "$prog$ext";
+	my $prog = "$prog";
 	if ( ! -x $prog ) {
 	    $prog = undef;
 	}
@@ -801,6 +862,7 @@ sub __build_cmd {
     my $path_builder = shift;
     # Make a copy to not destroy the caller's array
     my @cmdarray = ( @{$_[0]} ); shift;
+    my %opts = @_;
 
     # We do a little dance, as $path_builder might return a list of
     # more than one.  If so, only the first is to be considered a
@@ -820,8 +882,9 @@ sub __build_cmd {
 	}
     }
     my @args = (@prog, @cmdarray);
-
-    my %opts = @_;
+    if (defined($opts{interpreter_args})) {
+        unshift @args, @{$opts{interpreter_args}};
+    }
 
     return () if !$cmd;
 

@@ -266,6 +266,7 @@ int dump_cert_text(BIO *out, X509 *x)
     return 0;
 }
 
+#ifndef OPENSSL_NO_UI
 static int ui_open(UI *ui)
 {
     return UI_method_get_opener(UI_OpenSSL())(ui);
@@ -335,20 +336,25 @@ void destroy_ui_method(void)
         ui_method = NULL;
     }
 }
+#endif
 
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 {
-    UI *ui = NULL;
     int res = 0;
+#ifndef OPENSSL_NO_UI
+    UI *ui = NULL;
     const char *prompt_info = NULL;
+#endif
     const char *password = NULL;
     PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
     if (cb_data) {
         if (cb_data->password)
             password = cb_data->password;
+#ifndef OPENSSL_NO_UI
         if (cb_data->prompt_info)
             prompt_info = cb_data->prompt_info;
+#endif
     }
 
     if (password) {
@@ -359,6 +365,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         return res;
     }
 
+#ifndef OPENSSL_NO_UI
     ui = UI_new_method(ui_method);
     if (ui) {
         int ok = 0;
@@ -408,6 +415,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         UI_free(ui);
         OPENSSL_free(prompt);
     }
+#endif
     return res;
 }
 
@@ -2499,7 +2507,21 @@ BIO *dup_bio_err(int format)
 
 void unbuffer(FILE *fp)
 {
+/*
+ * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+ * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+ * However, we trust that the C RTL will never give us a FILE pointer
+ * above the first 4 GB of memory, so we simply turn off the warning
+ * temporarily.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment save
+# pragma message disable maylosedata2
+#endif
     setbuf(fp, NULL);
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment restore
+#endif
 }
 
 static const char *modestr(char mode, int format)

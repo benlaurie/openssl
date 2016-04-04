@@ -243,8 +243,10 @@ int dsa_main(int argc, char **argv)
     }
 
     if (modulus) {
+        BIGNUM *pub_key = NULL;
+        DSA_get0_key(dsa, &pub_key, NULL);
         BIO_printf(out, "Public Key=");
-        BN_print(out, dsa->pub_key);
+        BN_print(out, pub_key);
         BIO_printf(out, "\n");
     }
 

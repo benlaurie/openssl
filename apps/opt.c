@@ -163,8 +163,8 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     unknown = NULL;
 
     for (; o->name; ++o) {
-        const OPTIONS *next;
 #ifndef NDEBUG
+        const OPTIONS *next;
         int duplicated, i;
 #endif
 
@@ -373,6 +373,7 @@ int opt_long(const char *value, long *result)
     long l;
     char *endp;
 
+    errno = 0;
     l = strtol(value, &endp, 0);
     if (*endp
             || endp == value
@@ -398,6 +399,7 @@ int opt_imax(const char *value, intmax_t *result)
     intmax_t m;
     char *endp;
 
+    errno = 0;
     m = strtoimax(value, &endp, 0);
     if (*endp
             || endp == value
@@ -420,6 +422,7 @@ int opt_umax(const char *value, uintmax_t *result)
     uintmax_t m;
     char *endp;
 
+    errno = 0;
     m = strtoumax(value, &endp, 0);
     if (*endp
             || endp == value
@@ -445,6 +448,7 @@ int opt_ulong(const char *value, unsigned long *result)
     char *endptr;
     unsigned long l;
 
+    errno = 0;
     l = strtoul(value, &endptr, 0);
     if (*endptr
             || endptr == value
@@ -525,6 +529,11 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         i = atoi(opt_arg());
         if (i >= 0)
             X509_VERIFY_PARAM_set_depth(vpm, i);
+        break;
+    case OPT_V_VERIFY_AUTH_LEVEL:
+        i = atoi(opt_arg());
+        if (i >= 0)
+            X509_VERIFY_PARAM_set_auth_level(vpm, i);
         break;
     case OPT_V_ATTIME:
         if (!opt_imax(opt_arg(), &t))

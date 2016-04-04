@@ -877,7 +877,7 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
     if $config{cross_compile_prefix} eq "";
 
 # Allow overriding the names of some tools.  USE WITH CARE
-$config{perl} =    $ENV{'PERL'}    || which("perl5") || which("perl") || "perl";
+$config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
 $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  || which("ranlib") || "true";
 $target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
@@ -913,6 +913,8 @@ if ($target{build_scheme}->[0] eq "unified" && $classic) {
 
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
+
+push @{$config{defines}}, "NDEBUG"    if $config{build_type} eq "release";
 
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{

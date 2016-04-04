@@ -70,6 +70,7 @@ struct X509_VERIFY_PARAM_st {
     int purpose;                /* purpose to check untrusted certificates */
     int trust;                  /* trust setting to check */
     int depth;                  /* Verify depth */
+    int auth_level;             /* Security level for chain verification */
     STACK_OF(ASN1_OBJECT) *policies; /* Permissible policies */
     /* Peer identity details */
     STACK_OF(OPENSSL_STRING) *hosts; /* Set of acceptable names */
@@ -81,7 +82,8 @@ struct X509_VERIFY_PARAM_st {
     size_t iplen;               /* Length of IP address */
 };
 
-int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
+/* No error callback if depth < 0 */
+int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
 
 /* a sequence of these are used */
 struct x509_attributes_st {

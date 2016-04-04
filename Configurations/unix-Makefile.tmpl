@@ -89,7 +89,7 @@ GENERATED={- join(" ", map { (my $x = $_) =~ s|\.S$|\.s|; $x } keys %{$unified_i
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
 	     $(SRCDIR)/tools/c_issuer $(SRCDIR)/tools/c_name \
-	     $(BLDDIR)/apps/CA.pl $(SRCDIR)/apps/tsget
+	     $(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget
 
 SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{libraries}}) -}
 
@@ -261,7 +261,7 @@ clean: libclean
 # concatenate only if that is true.
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
-	@if [ -z "`find $(DEPS) -newer Makefile 2>/dev/null; exit 0`" ]; then \
+	@if [ -n "`find $(DEPS) -newer Makefile 2>/dev/null; exit 0`" ]; then \
 	  ( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
 	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
 	    echo; \
@@ -981,7 +981,7 @@ EOF
       my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       return <<"EOF";
 $lib$libext: $objs
-	\$(AR) \$\@ $objs
+	\$(AR) \$\@ \$\?
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
   }

@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
@@ -102,6 +102,11 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
     if (meth->init)
         meth->init(dsa);
     return 1;
+}
+
+const DSA_METHOD *DSA_get_method(DSA *d)
+{
+    return d->meth;
 }
 
 DSA *DSA_new_method(ENGINE *engine)
@@ -280,3 +285,69 @@ DH *DSA_dup_DH(const DSA *r)
     return NULL;
 }
 #endif
+
+void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g)
+{
+    if (p != NULL)
+        *p = d->p;
+    if (q != NULL)
+        *q = d->q;
+    if (g != NULL)
+        *g = d->g;
+}
+
+int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{
+    if (p == NULL || q == NULL || g == NULL)
+        return 0;
+    BN_free(d->p);
+    BN_free(d->q);
+    BN_free(d->g);
+    d->p = p;
+    d->q = q;
+    d->g = g;
+
+    return 1;
+}
+
+void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key)
+{
+    if (pub_key != NULL)
+        *pub_key = d->pub_key;
+    if (priv_key != NULL)
+        *priv_key = d->priv_key;
+}
+
+int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+    /* Note that it is valid for priv_key to be NULL */
+    if (pub_key == NULL)
+        return 0;
+
+    BN_free(d->pub_key);
+    BN_free(d->priv_key);
+    d->pub_key = pub_key;
+    d->priv_key = priv_key;
+
+    return 1;
+}
+
+void DSA_clear_flags(DSA *d, int flags)
+{
+    d->flags &= ~flags;
+}
+
+int DSA_test_flags(const DSA *d, int flags)
+{
+    return d->flags & flags;
+}
+
+void DSA_set_flags(DSA *d, int flags)
+{
+    d->flags |= flags;
+}
+
+ENGINE *DSA_get0_engine(DSA *d)
+{
+    return d->engine;
+}

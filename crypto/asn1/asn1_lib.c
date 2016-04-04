@@ -154,7 +154,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
 {
     const unsigned char *p = *pp;
     unsigned long ret = 0;
-    unsigned int i;
+    unsigned long i;
 
     if (max-- < 1)
         return 0;
