@@ -18,15 +18,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
         ctx = BN_CTX_new();
     }
     size_t l1 = 0, l2 = 0;
+    int s1 = 0, s2 = 0;
     if (len > 0) {
-        l1 = (buf[0] * (len - 1)) / 255;
+        l1 = ((buf[0] & 0x3f) * (len - 1)) / 0x3f;
+        s1 = buf[0] & 0x40;
+        s2 = buf[0] & 0x80;
         ++buf;
         l2 = len - 1 - l1;
     }
     BN_bin2bn(buf, l1, b1);
+    BN_set_negative(b1, s1);
     BN_bin2bn(buf + l1, l2, b2);
+    BN_set_negative(b2, s2);
 
-    // divide by 0 is an error undefined
+    // divide by 0 is an error
     if (BN_is_zero(b2))
         goto done;
 
