@@ -24,15 +24,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
     size_t l1 = 0, l2 = 0, l3 = 0;
     int s1 = 0, s2 = 0, s3 = 0;
     if (len > 2) {
-        l1 = (buf[0] * (len - 2)) / 255;
+        l1 = (buf[0] * (len - 3)) / 255;
         ++buf;
-        l2 = (buf[0] * (len - 2 - l1)) / 255;
+        l2 = (buf[0] * (len - 3 - l1)) / 255;
         ++buf;
-        l3 = len - 2 - l1 - l2;
+        l3 = len - 3 - l1 - l2;
 
         s1 = buf[0] & 1;
         s2 = buf[0] & 2;
         s3 = buf[0] & 4;
+        ++buf;
     }
     BN_bin2bn(buf, l1, b1);
     BN_set_negative(b1, s1);
