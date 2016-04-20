@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+"""Fuzzing helper, creates and uses corpus/crash directories.
+
+fuzzer.py <fuzzer> <extra fuzzer arguments>
+"""
+
 import os
 import subprocess
 import sys
@@ -15,22 +20,26 @@ if not os.path.isdir(FUZZER_DIR):
 
 corpora = []
 
-def create(d):
+def _create(d):
     dd = os.path.abspath(os.path.join(CORPORA_DIR, d))
     if not os.path.isdir(dd):
         os.mkdir(dd)
     corpora.append(dd)
 
-def add(d):
+def _add(d):
     dd = os.path.abspath(os.path.join(CORPORA_DIR, d))
     if os.path.isdir(dd):
         corpora.append(dd)
 
-create(FUZZER)
-create(FUZZER + "-crash")
-add(FUZZER + "-seed")
+def main():
+    _create(FUZZER)
+    _create(FUZZER + "-crash")
+    _add(FUZZER + "-seed")
 
-cmd = ([os.path.abspath(os.path.join(THIS_DIR, FUZZER))]  + sys.argv[2:]
-       + ["-artifact_prefix=" + corpora[1] + "/"] + corpora)
-print " ".join(cmd)
-subprocess.call(cmd)
+    cmd = ([os.path.abspath(os.path.join(THIS_DIR, FUZZER))]  + sys.argv[2:]
+           + ["-artifact_prefix=" + corpora[1] + "/"] + corpora)
+    print " ".join(cmd)
+    subprocess.call(cmd)
+
+if __name__ == "__main__":
+    main()
