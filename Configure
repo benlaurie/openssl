@@ -306,6 +306,7 @@ my @disablables = (
     "rfc3779",
     "ripemd",
     "rmd160",
+    "saw",
     "scrypt",
     "sctp",
     "seed",
@@ -412,6 +413,7 @@ my @disable_cascades = (
     "apps"              => [ "tests" ],
     "comp"		=> [ "zlib" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
+    sub { !$disabled{"saw"} } => [ "asm" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1188,6 +1190,14 @@ if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; }
 else                    { $no_user_cflags=1;  }
 if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
 else               { $no_user_defines=1;    }
+
+unless ($disabled{saw})
+	{
+        # Disable optimisation until SAW can handle it
+	$config{cflags} =~ s/-O\S*//g;
+	$target{cflags} =~ s/-O\S*//g;
+	$config{cflags} .= " -emit-llvm ";
+	}
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 

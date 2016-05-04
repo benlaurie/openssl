@@ -10,6 +10,7 @@
 /.dir-locals.el
 
 # Top level excludes
+/Makefile
 /Makefile.orig
 /MINFO
 /TABLE
@@ -21,9 +22,6 @@
 /out.*
 /tmp.*
 /configdata.pm
-
-# *all* Makefiles
-Makefile
 
 /test/*.ss
 /test/*.srl
