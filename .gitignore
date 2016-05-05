@@ -91,6 +91,9 @@ cscope.*
 *.d
 /crypto.map
 /ssl.map
+/proof/*.bc
+/proof/*.aig
+/proof/*.proof
 
 # Windows
 /tmp32
