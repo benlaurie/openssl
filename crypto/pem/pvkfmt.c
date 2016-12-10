@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2005.
- */
-/* ====================================================================
- * Copyright (c) 2005 The OpenSSL Project.  All rights reserved.
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /*
@@ -114,6 +65,9 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
 
 # define MS_KEYTYPE_KEYX         0x1
 # define MS_KEYTYPE_SIGN         0x2
+
+/* Maximum length of a blob after header */
+# define BLOB_MAX_LENGTH          102400
 
 /* The PVK file magic number: seems to spell out "bobsfile", who is Bob? */
 # define MS_PVKMAGIC             0xb0b5f11eL
@@ -260,6 +214,10 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
         return NULL;
 
     length = blob_length(bitlen, isdss, ispub);
+    if (length > BLOB_MAX_LENGTH) {
+        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_HEADER_TOO_LONG);
+        return NULL;
+    }
     buf = OPENSSL_malloc(length);
     if (buf == NULL) {
         PEMerr(PEM_F_DO_B2I_BIO, ERR_R_MALLOC_FAILURE);
@@ -388,7 +346,7 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
         RSA_set0_factors(rsa, p, q);
         RSA_set0_crt_params(rsa, dmp1, dmq1, iqmp);
     }
-    RSA_set0_key(rsa, e, n, d);
+    RSA_set0_key(rsa, n, e, d);
 
     EVP_PKEY_set1_RSA(ret, rsa);
     RSA_free(rsa);
@@ -516,7 +474,8 @@ static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
 static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     DSA_get0_pqg(dsa, &p, &q, &g);
     DSA_get0_key(dsa, &pub_key, &priv_key);
@@ -543,9 +502,9 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 {
     int nbyte, hnbyte, bitlen;
-    BIGNUM *e;
+    const BIGNUM *e;
 
-    RSA_get0_key(rsa, &e, NULL, NULL);
+    RSA_get0_key(rsa, NULL, &e, NULL);
     if (BN_num_bits(e) > 32)
         goto badkey;
     bitlen = RSA_bits(rsa);
@@ -555,7 +514,7 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
         *pmagic = MS_RSA1MAGIC;
         return bitlen;
     } else {
-        BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
+        const BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
 
         *pmagic = MS_RSA2MAGIC;
 
@@ -583,11 +542,11 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 {
     int nbyte, hnbyte;
-    BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
+    const BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
 
     nbyte = RSA_size(rsa);
     hnbyte = (RSA_bits(rsa) + 15) >> 4;
-    RSA_get0_key(rsa, &e, &n, &d);
+    RSA_get0_key(rsa, &n, &e, &d);
     write_lebn(out, e, 4);
     write_lebn(out, n, -1);
     if (ispub)
@@ -605,7 +564,8 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
 {
     int nbyte;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     DSA_get0_pqg(dsa, &p, &q, &g);
     DSA_get0_key(dsa, &pub_key, &priv_key);
@@ -806,7 +766,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
                    pem_password_cb *cb, void *u)
 {
     int outlen = 24, pklen;
-    unsigned char *p, *salt = NULL;
+    unsigned char *p = NULL, *start = NULL, *salt = NULL;
     EVP_CIPHER_CTX *cctx = NULL;
     if (enclevel)
         outlen += PVK_SALTLEN;
@@ -819,7 +779,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
     if (*out != NULL) {
         p = *out;
     } else {
-        p = OPENSSL_malloc(outlen);
+        start = p = OPENSSL_malloc(outlen);
         if (p == NULL) {
             PEMerr(PEM_F_I2B_PVK, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -828,7 +788,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
 
     cctx = EVP_CIPHER_CTX_new();
     if (cctx == NULL)
-        return -1;
+        goto error;
 
     write_ledword(&p, MS_PVKMAGIC);
     write_ledword(&p, 0);
@@ -876,12 +836,14 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
     EVP_CIPHER_CTX_free(cctx);
 
     if (*out == NULL)
-        *out = p;
+        *out = start;
 
     return outlen;
 
  error:
     EVP_CIPHER_CTX_free(cctx);
+    if (*out == NULL)
+        OPENSSL_free(start);
     return -1;
 }
 

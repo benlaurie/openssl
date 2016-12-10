@@ -23,7 +23,7 @@ my $testcount = scalar @libnames;
 plan tests => $testcount * 2;
 
 note
-    "NOTE: developper test!  It's possible that it won't run on your\n",
+    "NOTE: developer test!  It's possible that it won't run on your\n",
     "platform, and that's perfectly fine.  This is mainly for developers\n",
     "on Unix to check that our shared libraries are consistent with the\n",
     "ordinals (util/*.num in the source tree), something that should be\n",
@@ -57,7 +57,7 @@ foreach my $libname (@libnames) {
         note "Number of lines in \@def_lines before massaging: ", scalar @def_lines;
 
         # Massage the nm output to only contain defined symbols
-        @nm_lines = sort map { s| .*||; $_ } grep(m|.* [BCDT] .*|, @nm_lines);
+        @nm_lines = sort map { s| .*||; $_ } grep(m|.* [BCDST] .*|, @nm_lines);
 
         # Massage the mkdef.pl output to only contain global symbols
         # The output we got is in Unix .map format, which has a global
@@ -69,6 +69,7 @@ foreach my $libname (@libnames) {
             map { s|;||; s|\s+||g; $_ }
             grep { $in_global = 1 if m|global:|;
                    $in_global = 0 if m|local:|;
+                   $in_global = 0 if m|\}|;
                    $in_global && m|;|; } @def_lines;
 
         note "Number of lines in \@nm_lines after massaging: ", scalar @nm_lines;

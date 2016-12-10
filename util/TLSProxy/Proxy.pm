@@ -161,7 +161,7 @@ sub start
     }
     $self->serverpid($pid);
 
-    $self->clientstart;
+    return $self->clientstart;
 }
 
 sub clientstart
@@ -188,7 +188,8 @@ sub clientstart
     if ($proxy_sock) {
         print "Proxy started on port ".$self->proxy_port."\n";
     } else {
-        die "Failed creating proxy socket (".$proxaddr.",".$self->proxy_port."): $!\n";
+        warn "Failed creating proxy socket (".$proxaddr.",".$self->proxy_port."): $!\n";
+        return 0;
     }
 
     if ($self->execute) {
@@ -213,8 +214,11 @@ sub clientstart
     }
 
     # Wait for incoming connection from client
-    my $client_sock = $proxy_sock->accept()
-        or die "Failed accepting incoming connection: $!\n";
+    my $client_sock;
+    if(!($client_sock = $proxy_sock->accept())) {
+        warn "Failed accepting incoming connection: $!\n";
+        return 0;
+    }
 
     print "Connection opened\n";
 
@@ -226,22 +230,27 @@ sub clientstart
     do {
         my $servaddr = $self->server_addr;
         $servaddr =~ s/[\[\]]//g; # Remove [ and ]
-        $server_sock = $IP_factory->(
-            PeerAddr => $servaddr,
-            PeerPort => $self->server_port,
-            MultiHomed => 1,
-            Proto => 'tcp'
-        );
+        eval {
+            $server_sock = $IP_factory->(
+                PeerAddr => $servaddr,
+                PeerPort => $self->server_port,
+                MultiHomed => 1,
+                Proto => 'tcp'
+            );
+        };
 
         $retry--;
-        if ($@ || !defined($server_sock)) {
+        #Some buggy IP factories can return a defined server_sock that hasn't
+        #actually connected, so we check peerport too
+        if ($@ || !defined($server_sock) || !defined($server_sock->peerport)) {
             $server_sock->close() if defined($server_sock);
             undef $server_sock;
             if ($retry) {
                 #Sleep for a short while
                 select(undef, undef, undef, 0.1);
             } else {
-                die "Failed to start up server (".$servaddr.",".$self->server_port."): $!\n";
+                warn "Failed to start up server (".$servaddr.",".$self->server_port."): $!\n";
+                return 0;
             }
         }
     } while (!$server_sock);
@@ -291,6 +300,7 @@ sub clientstart
               .$self->serverpid."\n";
         waitpid( $self->serverpid, 0);
     }
+    return 1;
 }
 
 sub process_packet

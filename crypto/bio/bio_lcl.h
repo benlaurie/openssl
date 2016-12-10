@@ -1,3 +1,12 @@
+/*
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #define USE_SOCKETS
 #include "e_os.h"
 
@@ -136,6 +145,8 @@ socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap);
 socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai);
 const struct sockaddr *BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO *bai);
 #endif
+
+extern CRYPTO_RWLOCK *bio_type_lock;
 
 void bio_sock_cleanup_int(void);
 

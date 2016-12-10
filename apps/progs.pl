@@ -48,7 +48,7 @@ typedef enum FUNC_TYPE {
 typedef struct function_st {
     FUNC_TYPE type;
     const char *name;
-    int (*func)(int argc,char *argv[]);
+    int (*func)(int argc, char *argv[]);
     const OPTIONS *help;
 } FUNCTION;
 
@@ -108,7 +108,7 @@ foreach my $cmd (
         } elsif (my $disabler = $md_disabler{$cmd}) {
                 print "#ifndef OPENSSL_NO_".uc($disabler)."\n${str}#endif\n";
         } else {
-                print "#ifndef OPENSSL_NO_".uc($cmd)."\n${str}#endif\n";
+                print $str;
         }
 }
 

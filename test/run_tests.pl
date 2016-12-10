@@ -9,8 +9,14 @@
 use strict;
 use warnings;
 
+# Recognise VERBOSE and V which is common on other projects.
+BEGIN {
+    $ENV{HARNESS_VERBOSE} = "yes" if $ENV{VERBOSE} || $ENV{V};
+}
+
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
 use File::Basename;
+use if $^O ne "VMS", 'File::Glob' => qw/glob/;
 use Test::Harness qw/runtests $switches/;
 
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
@@ -34,7 +40,7 @@ if (@ARGV) {
     @tests = @ARGV;
 }
 my $list_mode = scalar(grep /^list$/, @tests) != 0;
-if (grep /^alltests|list$/, @tests) {
+if (grep /^(alltests|list)$/, @tests) {
     @tests = grep {
 	basename($_) =~ /^[0-9][0-9]-[^\.]*\.t$/
     } glob(catfile($recipesdir,"*.t"));

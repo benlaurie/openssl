@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -126,6 +133,7 @@ my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
 
 $code.=<<___;
 .machine	"any"
+.text
 
 .globl	.ChaCha20_ctr32_int
 .align	5

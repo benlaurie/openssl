@@ -24,6 +24,9 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
+plan skip_all => "$test_name needs TLS enabled"
+    if alldisabled(available_protocols("tls"));
+
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$);
@@ -43,15 +46,14 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 9;
-
 #Test 1: By default server and client should send extended master secret
 # extension.
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 Full handshake
 
 setrmextms(0, 0);
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 9;
 checkmessages(1, "Default extended master secret test", 1, 1, 1);
 
 #Test 2: If client omits extended master secret extension, server should too.
@@ -88,7 +90,7 @@ checkmessages(2, "No ticket, no client extension extended master secret test", 0
 
 clearall();
 setrmextms(0, 0);
-(my $fh, my $session) = tempfile();
+(undef, my $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
@@ -96,6 +98,7 @@ $proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption extended master secret test", 1, 1, 0);
+unlink $session;
 
 #Test 6: Session resumption extended master secret test original session
 # omits extension. Server must not resume session.
@@ -104,7 +107,7 @@ checkmessages(5, "Session resumption extended master secret test", 1, 1, 0);
 
 clearall();
 setrmextms(1, 0);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
@@ -113,6 +116,7 @@ $proxy->clientflags("-sess_in ".$session);
 setrmextms(0, 0);
 $proxy->clientstart();
 checkmessages(6, "Session resumption extended master secret test", 1, 1, 1);
+unlink $session;
 
 #Test 7: Session resumption extended master secret test resumed session
 # omits client extension. Server must abort connection.
@@ -120,7 +124,7 @@ checkmessages(6, "Session resumption extended master secret test", 1, 1, 1);
 
 clearall();
 setrmextms(0, 0);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
@@ -129,6 +133,7 @@ $proxy->clientflags("-sess_in ".$session);
 setrmextms(1, 0);
 $proxy->clientstart();
 ok(TLSProxy::Message->fail(), "Client inconsistent session resumption");
+unlink $session;
 
 #Test 8: Session resumption extended master secret test resumed session
 # omits server extension. Client must abort connection.
@@ -136,7 +141,7 @@ ok(TLSProxy::Message->fail(), "Client inconsistent session resumption");
 
 clearall();
 setrmextms(0, 0);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
@@ -145,6 +150,7 @@ $proxy->clientflags("-sess_in ".$session);
 setrmextms(0, 1);
 $proxy->clientstart();
 ok(TLSProxy::Message->fail(), "Server inconsistent session resumption 1");
+unlink $session;
 
 #Test 9: Session resumption extended master secret test initial session
 # omits server extension. Client must abort connection.
@@ -152,7 +158,7 @@ ok(TLSProxy::Message->fail(), "Server inconsistent session resumption 1");
 
 clearall();
 setrmextms(0, 1);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
@@ -161,6 +167,7 @@ $proxy->clientflags("-sess_in ".$session);
 setrmextms(0, 0);
 $proxy->clientstart();
 ok(TLSProxy::Message->fail(), "Server inconsistent session resumption 2");
+unlink $session;
 
 sub extms_filter
 {

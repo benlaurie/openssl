@@ -1,11 +1,10 @@
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL licenses, (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- * or in the file LICENSE in the source distribution.
  */
 
 /* Regression tests for ASN.1 parsing bugs. */
@@ -148,7 +147,8 @@ int main(int argc, char **argv)
     static ASN1_ITEM_EXP *items[] = {
         ASN1_ITEM_ref(ASN1_ANY),
         ASN1_ITEM_ref(X509),
-        ASN1_ITEM_ref(GENERAL_NAME)
+        ASN1_ITEM_ref(GENERAL_NAME),
+        ASN1_ITEM_ref(ASN1_INTEGER)
     };
 
     static error_enum expected_errors[] = {

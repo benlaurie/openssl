@@ -24,6 +24,9 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
+plan skip_all => "$test_name needs TLS enabled"
+    if alldisabled(available_protocols("tls"));
+
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$$);
@@ -42,12 +45,11 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 8;
-
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Full handshake
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 10;
 checkmessages(1, "Default session ticket test", 1, 1, 1, 1);
 
 #Test 2: If the server does not accept tickets we should get a normal handshake
@@ -72,7 +74,7 @@ checkmessages(3, "No client support session ticket test", 0, 0, 0, 1);
 #Expected result: ClientHello extension seen; ServerHello extension not seen
 #                 NewSessionTicket message not seen; Abbreviated handshake
 clearall();
-(my $fh, my $session) = tempfile();
+(undef, my $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
@@ -80,12 +82,13 @@ $proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(4, "Session resumption session ticket test", 1, 0, 0, 0);
+unlink $session;
 
 #Test 5: Test session resumption with ticket capable client without a ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Abbreviated handshake
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session." -no_ticket");
 $proxy->start();
@@ -94,6 +97,7 @@ $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption with ticket capable client without a "
                  ."ticket", 1, 1, 1, 0);
+unlink $session;
 
 #Test 6: Client accepts empty ticket.
 #Expected result: ClientHello extension seen; ServerHello extension seen;
@@ -105,7 +109,7 @@ checkmessages(6, "Empty ticket test",  1, 1, 1, 1);
 
 #Test 7-8: Client keeps existing ticket on empty ticket.
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(3);
 $proxy->filter(undef);
 $proxy->clientflags("-sess_out ".$session);
@@ -124,7 +128,25 @@ $proxy->clientstart();
 #Expected result: ClientHello extension seen; ServerHello extension not seen;
 #                 NewSessionTicket message not seen; Abbreviated handshake.
 checkmessages(8, "Empty ticket resumption test",  1, 0, 0, 0);
+unlink $session;
 
+#Test 9: Bad server sends the ServerHello extension but does not send a
+#NewSessionTicket
+#Expected result: Connection failure
+clearall();
+$proxy->serverflags("-no_ticket");
+$proxy->filter(\&inject_ticket_extension_filter);
+$proxy->start();
+ok(TLSProxy::Message->fail, "Server sends ticket extension but no ticket test");
+
+#Test10: Bad server does not send the ServerHello extension but does send a
+#NewSessionTicket
+#Expected result: Connection failure
+clearall();
+$proxy->serverflags("-no_ticket");
+$proxy->filter(\&inject_empty_ticket_filter);
+$proxy->start();
+ok(TLSProxy::Message->fail, "No server ticket extension but ticket sent test");
 
 sub ticket_filter
 {
@@ -166,6 +188,26 @@ sub inject_empty_ticket_filter {
         }
     }
     $proxy->message_list([@new_message_list]);
+}
+
+sub inject_ticket_extension_filter
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ServerHello
+    if ($proxy->flight != 1) {
+        return;
+    }
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
+            #Add the session ticket extension to the ServerHello even though
+            #we are not going to send a NewSessionTicket message
+            $message->set_extension(TLSProxy::Message::EXT_SESSION_TICKET, "");
+
+            $message->repack();
+        }
+    }
 }
 
 sub checkmessages($$$$$$)

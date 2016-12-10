@@ -14,6 +14,7 @@ CFLAGS=$(CFLAG)
 LDFLAGS=$(LDFLAG)
 SHARED_LDFLAGS=$(SHARED_LDFLAG)
 
+RC=windres
 # SHARED_RCFLAGS are flags used with windres, i.e. when build for Cygwin
 # or Mingw.
 SHARED_RCFLAGS=$(SHARED_RCFLAG)
@@ -149,8 +150,8 @@ LINK_SO_DSO=	INHIBIT_SYMLINKS=yes; SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_SHLIB_VIA_O=	\
   SHOBJECTS=$(DSTDIR)/lib$(LIBNAME).o; \
   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
-  ( echo ld $(LDFLAGS) -r -o $$SHOBJECTS.o $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
-    ld $(LDFLAGS) -r -o $$SHOBJECTS.o $$ALL $(DSTDIR)/lib$(LIBNAME).a $(LIBEXTRAS) ); \
+  ( echo ld $(LDFLAGS) -r -o $$SHOBJECTS $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
+    ld $(LDFLAGS) -r -o $$SHOBJECTS $$ALL $(DSTDIR)/lib$(LIBNAME).a $(LIBEXTRAS) ); \
   $(LINK_SO) && ( echo rm -f $$SHOBJECTS; rm -f $$SHOBJECTS )
 
 LINK_SO_SHLIB_UNPACKED=	\
@@ -278,9 +279,9 @@ link_shlib.cygwin:
 	SHLIB=cyg$(LIBNAME); SHLIB_SOVER=-$(LIBVERSION); SHLIB_SUFFIX=.dll; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 	echo "$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name |" \
-		     "$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o"; \
+		     "$(RC) $(SHARED_RCFLAGS) -o rc.o"; \
 	$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name | \
-		$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o; \
+		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,--enable-auto-image-base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a rc.o"; \
@@ -306,9 +307,9 @@ link_shlib.mingw:
 		| sed -e 's|^\(LIBRARY  *\)$(LIBNAME)32|\1'"$$dll_name"'|' \
 		> $(LIBNAME).def; \
 	echo "$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name |" \
-		"$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o"; \
+		"$(RC) $(SHARED_RCFLAGS) -o rc.o"; \
 	$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name | \
-		$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o; \
+		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $(LIBNAME).def rc.o"; \
@@ -525,6 +526,7 @@ link_dso.aix:
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER 2>&1 > /dev/null ; \
 	$(LINK_SO_DSO);
 link_shlib.aix:
 	@ $(CALC_VERSIONS); \
@@ -535,6 +537,7 @@ link_shlib.aix:
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER 2>&1 > /dev/null ; \
 	$(LINK_SO_SHLIB_VIA_O)
 link_app.aix:
 	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
@@ -561,11 +564,11 @@ symlink.hpux:
 symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 
 # Compatibility targets
-link_dso.bsd-gcc-shared link_dso.linux-shared link_dso.gnu-shared link_dso.haiku-shared: link_dso.gnu
+link_dso.bsd-gcc-shared link_dso.linux-shared link_dso.gnu-shared: link_dso.gnu
 link_shlib.bsd-gcc-shared: link_shlib.linux-shared
-link_shlib.gnu-shared link_shlib.haiku-shared: link_shlib.gnu
-link_app.bsd-gcc-shared link_app.linux-shared link_app.gnu-shared link_app.haiku-shared: link_app.gnu
-symlink.bsd-gcc-shared symlink.bsd-shared symlink.linux-shared symlink.gnu-shared symlink.haiku-shared: symlink.gnu
+link_shlib.gnu-shared: link_shlib.gnu
+link_app.bsd-gcc-shared link_app.linux-shared link_app.gnu-shared: link_app.gnu
+symlink.bsd-gcc-shared symlink.bsd-shared symlink.linux-shared symlink.gnu-shared: symlink.gnu
 link_dso.bsd-shared: link_dso.bsd
 link_shlib.bsd-shared: link_shlib.bsd
 link_app.bsd-shared: link_app.bsd

@@ -18,7 +18,7 @@ typedef enum FUNC_TYPE {
 typedef struct function_st {
     FUNC_TYPE type;
     const char *name;
-    int (*func)(int argc,char *argv[]);
+    int (*func)(int argc, char *argv[]);
     const OPTIONS *help;
 } FUNCTION;
 
@@ -214,9 +214,7 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_MD4
     { FT_md, "md4", dgst_main},
 #endif
-#ifndef OPENSSL_NO_MD5
     { FT_md, "md5", dgst_main},
-#endif
 #ifndef OPENSSL_NO_GOST
     { FT_md, "gost", dgst_main},
 #endif

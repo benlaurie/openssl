@@ -1,80 +1,35 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
+ * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#ifdef _WIN32
+# ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0400
+# endif
+# include <windows.h>
+# include <wincrypt.h>
 
-#include <openssl/crypto.h>
+# include <stdio.h>
+# include <string.h>
+# include <stdlib.h>
+# include <malloc.h>
+# ifndef alloca
+#  define alloca _alloca
+# endif
 
-#ifdef OPENSSL_SYS_WIN32
+# include <openssl/crypto.h>
+
 # ifndef OPENSSL_NO_CAPIENG
 
 #  include <openssl/buffer.h>
 #  include <openssl/bn.h>
 #  include <openssl/rsa.h>
 #  include <openssl/dsa.h>
-
-#  ifndef _WIN32_WINNT
-#   define _WIN32_WINNT 0x0400
-#  endif
-
-#  include <windows.h>
-#  include <wincrypt.h>
-#  include <malloc.h>
-#  ifndef alloca
-#   define alloca _alloca
-#  endif
 
 /*
  * This module uses several "new" interfaces, among which is
@@ -94,7 +49,7 @@
 #   define __COMPILE_CAPIENG
 #  endif                        /* CERT_KEY_PROV_INFO_PROP_ID */
 # endif                         /* OPENSSL_NO_CAPIENG */
-#endif                          /* OPENSSL_SYS_WIN32 */
+#endif                          /* _WIN32 */
 
 #ifdef __COMPILE_CAPIENG
 
@@ -339,6 +294,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     int ret = 1;
     CAPI_CTX *ctx;
     BIO *out;
+    LPSTR tmpstr;
     if (capi_idx == -1) {
         CAPIerr(CAPI_F_CAPI_CTRL, CAPI_R_ENGINE_NOT_INITIALIZED);
         return 0;
@@ -367,9 +323,15 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_STORE_NAME:
-        OPENSSL_free(ctx->storename);
-        ctx->storename = OPENSSL_strdup(p);
-        CAPI_trace(ctx, "Setting store name to %s\n", p);
+        tmpstr = OPENSSL_strdup(p);
+        if (tmpstr != NULL) {
+            OPENSSL_free(ctx->storename);
+            ctx->storename = tmpstr;
+            CAPI_trace(ctx, "Setting store name to %s\n", p);
+        } else {
+            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_MALLOC_FAILURE);
+            ret = 0;
+        }
         break;
 
     case CAPI_CMD_STORE_FLAGS:
@@ -389,8 +351,14 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_DEBUG_FILE:
-        ctx->debug_file = OPENSSL_strdup(p);
-        CAPI_trace(ctx, "Setting debug file to %s\n", ctx->debug_file);
+        tmpstr = OPENSSL_strdup(p);
+        if (tmpstr != NULL) {
+            ctx->debug_file = tmpstr;
+            CAPI_trace(ctx, "Setting debug file to %s\n", ctx->debug_file);
+        } else {
+            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_MALLOC_FAILURE);
+            ret = 0;
+        }
         break;
 
     case CAPI_CMD_KEYTYPE:
@@ -1060,17 +1028,17 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
         capi_addlasterror();
         goto err;
     } else {
-        BIGNUM *r = NULL, *s = NULL;
-        ret = DSA_SIG_new();
-        if (ret == NULL)
-            goto err;
-        DSA_SIG_get0(&r, &s, ret);
-        if (!lend_tobn(r, csigbuf, 20)
-            || !lend_tobn(s, csigbuf + 20, 20)) {
-            DSA_SIG_free(ret);
-            ret = NULL;
+        BIGNUM *r = BN_new(), *s = BN_new();
+
+        if (r == NULL || s == NULL
+            || !lend_tobn(r, csigbuf, 20)
+            || !lend_tobn(s, csigbuf + 20, 20)
+            || (ret = DSA_SIG_new()) == NULL) {
+            BN_free(r); /* BN_free checks for BIGNUM * being NULL */
+            BN_free(s);
             goto err;
         }
+        DSA_SIG_set0(ret, r, s);
     }
 
     /* Now cleanup */
@@ -1669,6 +1637,8 @@ static void capi_ctx_free(CAPI_CTX * ctx)
 static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
                                  int check)
 {
+    LPSTR tmpcspname;
+
     CAPI_trace(ctx, "capi_ctx_set_provname, name=%s, type=%d\n", pname, type);
     if (check) {
         HCRYPTPROV hprov;
@@ -1692,8 +1662,13 @@ static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
         }
         CryptReleaseContext(hprov, 0);
     }
+    tmpcspname = OPENSSL_strdup(pname);
+    if (tmpcspname == NULL) {
+        CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     OPENSSL_free(ctx->cspname);
-    ctx->cspname = OPENSSL_strdup(pname);
+    ctx->cspname = tmpcspname;
     ctx->csptype = type;
     return 1;
 }
