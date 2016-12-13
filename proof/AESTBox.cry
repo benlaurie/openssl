@@ -84,7 +84,7 @@ keyExpansion key = chop4 keys
         nextWord : [8] -> [Nb * 8] -> [Nb * 8] -> [Nb * 8]
         nextWord i prev old = old ^
           (if (i % `Nk) == 0 then subWordRcon (join (split`{4} prev <<< 1)) (roundConstants @ (i / `Nk))
-           else if (i % `Nk) == 4 && `Nk > 6 then subWordRcon prev 0
+           else if ((i % `Nk) == 4) /\ (`Nk > 6) then subWordRcon prev 0
            else prev)
 
 mETable = [ gf28Mult 0x0E i | i <- [ 0 .. 255 ] ]
