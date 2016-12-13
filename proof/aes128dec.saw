@@ -1,8 +1,8 @@
-import "aes.cry";
+import "AESTBox.cry";
 
 let {{
-  aesExtract x = aesDecrypt (pt,key)
-    where [pt,key] = split x
+  aesExtract x = aesDecrypt ct key
+    where [ct,key] = split x
 }};
 
 print "Loading OpenSSL implementation";

@@ -1,7 +1,7 @@
-import "aes.cry";
+import "AESTBox.cry";
 
 let {{
-  aesExtract x = aesEncrypt (pt,key)
+  aesExtract x = aesEncrypt pt key
     where [pt,key] = split x
 }};
 
