@@ -44,18 +44,18 @@ aes128dec.aig: aes128dec.bc
 aes256dec.aig: aes256dec.bc
 	time $(SAW)/lss aes256dec.bc
 
-aes128enc.proof: aes128enc.aig aes128enc.saw aes.cry
+aes128enc.proof: aes128enc.aig aes128enc.saw AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/saw aes128enc.saw
 	touch aes128enc.proof
 
-aes256enc.proof: aes256enc.aig aes256enc.saw
+aes256enc.proof: aes256enc.aig aes256enc.saw AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/saw aes256enc.saw
 	touch aes256enc.proof
 
-aes128dec.proof: aes128dec.aig aes128dec.saw aes.cry
+aes128dec.proof: aes128dec.aig aes128dec.saw AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/saw aes128dec.saw
 	touch aes128dec.proof
 
-aes256dec.proof: aes256dec.aig aes256dec.saw
+aes256dec.proof: aes256dec.aig aes256dec.saw AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/saw aes256dec.saw
 	touch aes256dec.proof
