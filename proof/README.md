@@ -8,8 +8,8 @@ completely.
 
 You can find it [here](http://llvm.org/releases/download.html).
 
-Then you need [SAW](http://saw.galois.com/downloads.html) and
-[Z3](https://github.com/Z3Prover/z3/releases).
+Then you need [SAW](http://saw.galois.com/builds/nightly/) (I used the
+12/12/16 version) and [Z3](https://github.com/Z3Prover/z3/releases).
 
 Now, configure and build OpenSSL in a form useful to SAW:
 
